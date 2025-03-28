@@ -19,76 +19,39 @@ class DataService:
             
         except Exception as e:
             print(f"Error loading data: {e}")
-
-    def search(self, query: str, field: str = "Product", limit: int = 10) -> Dict:
+    def multi_field_search(self, filters: Dict[str, str]) -> Dict:
         """
-        Search the DataFrame for matching records
+        Search with multiple field conditions
         Args:
-            query (str): The search term
-            field (str): Field to search in
-            limit (int): Maximum number of results to return
+            filters: Dictionary of field-query pairs
+                Example: {"Product": "cotton", "ForeignCompany": "plastic"}
         """
         if self.df is None:
             return {"total_matches": 0, "results": []}
+
+        results = self.df.copy()
         
-        # Case-insensitive search
-        mask = self.df[field].str.contains(query, case=False, na=False)
-        results = self.df[mask]
+        for field, query in filters.items():
+            if query:
+                results = results[results[field].str.contains(query, case=False, na=False)]
         
-        # Get total matches before limiting
-        total_matches = len(results)
-        
-        # Select fields and limit results
-        selected_fields = [
-            'Date', 'Product', 'IndianCompany', 'ForeignCompany',
-            'ForeignCountry', 'Quantity', 'Unit', 'Total_Amount_INV_FC',
-            'ForeignPort'
-        ]
-        
-        # Convert to records first, then wrap in response dict
-        records = results[selected_fields].head(limit).to_dict('records')
-        
+        records = results.head(10).to_dict('records')
+
         return {
-            "total_matches": total_matches,
-            "results": records
+            "searches": filters,
+            "total_matches": len(results),
+            "showing": min(10, len(results)),
+            "results": {f"Result {i+1}": r for i, r in enumerate(records)}
         }
 
 # Test the class
 if __name__ == "__main__":
-    # Single instance
     service = DataService()
     
-    # Get results once
-    results = service.search("steel")
-    
-    # Print header
-    print("\n" + "="*50)
-    print(f"Search results for 'steel' (Found: {results['total_matches']})")
-    print("="*50)
-    
-    # Single print loop
-    for idx, r in enumerate(results['results'], 1):
-        print(f"\nResult {idx}:")
-        print("-"*40)
-        # Print each field exactly once in fixed order
-        fields_to_print = [
-            ('Date', lambda x: x.strftime('%Y-%m-%d')),
-            ('Product', str),
-            ('IndianCompany', str),
-            ('ForeignCompany', str),
-            ('ForeignCountry', str),
-            ('Quantity', str),
-            ('Unit', str),
-            ('Total_Amount_INV_FC', str),
-            ('ForeignPort', str)
-        ]
-        
-        for field, formatter in fields_to_print:
-            value = r.get(field)
-            if value is not None:
-                print(f"{field}: {formatter(value)}")
-    
-    # Clear end marker
-    print("\n" + "="*50)
-    print("END OF RESULTS")
-    print("="*50 + "\n")
+    # Test multi-field search
+    test_filters = {
+        "Product": "cotton",
+        "ForeignCompany": "plastic"
+    }
+    results = service.multi_field_search(test_filters)
+    print(f"Found {results['total_matches']} matches")
