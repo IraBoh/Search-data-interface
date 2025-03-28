@@ -21,7 +21,9 @@ data_service = DataService()
 async def search(
     product: str = Query(None, description="Search in Product field"),
     indian_company: str = Query(None, description="Search in IndianCompany field"),
-    foreign_company: str = Query(None, description="Search in ForeignCompany field")
+    foreign_company: str = Query(None, description="Search in ForeignCompany field"),
+    page: int = Query(1, description="Page number"),
+    page_size: int = Query(10, description="Results per page")
 ) -> Dict:
     # Create filters dictionary
     filters = {
@@ -31,7 +33,7 @@ async def search(
     }
     
     # Use the new multi_field_search method
-    return data_service.multi_field_search(filters)
+    return data_service.multi_field_search(filters, page, page_size)
 
 @app.get("/")
 async def root():

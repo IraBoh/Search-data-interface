@@ -19,7 +19,7 @@ class DataService:
             
         except Exception as e:
             print(f"Error loading data: {e}")
-    def multi_field_search(self, filters: Dict[str, str]) -> Dict:
+    def multi_field_search(self, filters: Dict[str, str], page: int = 1, page_size: int = 10) -> Dict:
         """
         Search with multiple field conditions
         Args:
@@ -31,17 +31,26 @@ class DataService:
 
         results = self.df.copy()
         
+        # Apply filters
         for field, query in filters.items():
             if query:
                 results = results[results[field].str.contains(query, case=False, na=False)]
         
-        records = results.head(10).to_dict('records')
-
+        # Calculate pagination
+        total_matches = len(results)
+        start_idx = (page - 1) * page_size
+        end_idx = start_idx + page_size
+        
+        # Get paginated results
+        paginated_results = results.iloc[start_idx:end_idx]
+        
         return {
             "searches": filters,
-            "total_matches": len(results),
-            "showing": min(10, len(results)),
-            "results": {f"Result {i+1}": r for i, r in enumerate(records)}
+            "total_matches": total_matches,
+            "page": page,
+            "page_size": page_size,
+            "has_more": end_idx < total_matches,
+            "results": paginated_results.to_dict('records')
         }
 
 # Test the class
