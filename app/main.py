@@ -23,27 +23,25 @@ async def search(
     indian_company: str = Query(None, description="Search in IndianCompany field"),
     foreign_company: str = Query(None, description="Search in ForeignCompany field")
 ) -> Dict:
-    results = []
+    # Start with all results
+    results = data_service.df
     total_matches = 0
     
-    # Search in each field if query provided
+    # Apply each filter if provided
     if product:
-        product_results = data_service.search(query=product, field="Product")
-        results.extend(product_results["results"])
-        total_matches += product_results["total_matches"]
+        results = results[results['Product'].str.contains(product, case=False, na=False)]
         
     if indian_company:
-        indian_results = data_service.search(query=indian_company, field="IndianCompany")
-        results.extend(indian_results["results"])
-        total_matches += indian_results["total_matches"]
+        results = results[results['IndianCompany'].str.contains(indian_company, case=False, na=False)]
         
     if foreign_company:
-        foreign_results = data_service.search(query=foreign_company, field="ForeignCompany")
-        results.extend(foreign_results["results"])
-        total_matches += foreign_results["total_matches"]
+        results = results[results['ForeignCompany'].str.contains(foreign_company, case=False, na=False)]
     
-    # Remove duplicates and limit results
-    unique_results = list({str(r): r for r in results}.values())[:10]
+    # Get total matches after all filters
+    total_matches = len(results)
+    
+    # Convert to records (limit to 10)
+    records = results.head(10).to_dict('records')
     
     return {
         "searches": {
@@ -52,8 +50,8 @@ async def search(
             "foreign_company": foreign_company
         },
         "total_matches": total_matches,
-        "showing": len(unique_results),
-        "results": {f"Result {i+1}": r for i, r in enumerate(unique_results)}
+        "showing": len(records),
+        "results": {f"Result {i+1}": r for i, r in enumerate(records)}
     }
 
 @app.get("/")
