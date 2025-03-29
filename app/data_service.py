@@ -9,16 +9,23 @@ class DataService:
 
     def load_data(self):
         """Load the Excel file into a pandas DataFrame"""
-        # Using pathlib for better path handling
         file_path = Path("data/IMEX-IN-2016-06-EX.part2.xlsx")
         
         try:
             self.df = pd.read_excel(file_path)
-            print("Data loaded successfully!")  # Simplified
-            print(f"Total rows: {len(self.df)}")  # Only show total rows
+            
+            # Rename columns to match frontend expectations
+            self.df = self.df.rename(columns={
+                'FOB INR': 'FOB_INR',
+                # Add any other columns that need renaming
+            })
+            
+            print("Data loaded successfully!")
+            print(f"Total rows: {len(self.df)}")
             
         except Exception as e:
             print(f"Error loading data: {e}")
+
     def multi_field_search(self, filters: Dict[str, str], page: int = 1, page_size: int = 10) -> Dict:
         """
         Search with multiple field conditions
@@ -28,8 +35,13 @@ class DataService:
         """
         if self.df is None:
             return {"total_matches": 0, "results": []}
-
+        
+        # Debug: Print column names
+        print("\nAvailable columns in DataFrame:")
+        print(self.df.columns.tolist())
+        
         results = self.df.copy()
+        results = results.rename(columns={'FOB INR': 'FOB_INR'})
         
         # Apply filters
         for field, query in filters.items():

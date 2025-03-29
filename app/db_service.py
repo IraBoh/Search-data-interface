@@ -50,7 +50,7 @@ class DBService:    # Changed class name too
             """
             cursor.execute(results_sql, params + [page_size, offset])
             
-            # Convert results to list of dicts with PascalCase keys
+            # Convert results to list of dicts with correct column names
             results = []
             for row in cursor.fetchall():
                 row_dict = dict(row)
@@ -66,11 +66,10 @@ class DBService:    # Changed class name too
                     "Item_Rate_INR": row_dict["item_rate_inr"],
                     "Currency": row_dict["currency"],
                     "Total_Amount_INV_FC": row_dict["total_amount_inv_fc"],
-                    "FOB_INR": row_dict["fob_inr"],
+                    "FOB_INR": row_dict["fob_inr"],  
                     "IEC": row_dict["iec"],
                     "4Digit": row_dict["four_digit"],
                     "HSCode": row_dict["hs_code"],
-                    # Add other fields as needed...
                 }
                 results.append(formatted_row)
             
@@ -79,7 +78,7 @@ class DBService:    # Changed class name too
                 "total_matches": total_matches,
                 "page": page,
                 "page_size": page_size,
-                "has_more": (offset + page_size) < total_matches,
+                "has_more": (page * page_size) < total_matches,
                 "results": results
             }
             
