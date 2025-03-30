@@ -7,9 +7,9 @@ __pycache__/
 venv/
 env/
 
-# Database
-*.db
-database.db
+# Allow this specific database but ignore others
+!backend/app/db/database.db
+*.db                        # Ignore other DB files
 
 # IDE
 .vscode/
